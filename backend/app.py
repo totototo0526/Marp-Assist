@@ -33,18 +33,21 @@ def generate_marp_content():
 
     topic = data['topic']
 
-    # プロンプトをconfigから読み込み、topicを埋め込むように修正
-    prompt = config.BASE_PROMPT.format(topic=topic)
+    # ツイート文生成用に、4つのプロンプト変数を結合して使用
+    prompt = (
+        config.PERSONA_PROMPT +
+        config.CONTEXT_PROMPT.format(topic=topic) +
+        config.CONDITIONS_PROMPT +
+        config.FINAL_INSTRUCTION
+    )
 
     try:
         # Gemini APIを呼び出してコンテンツを生成
         response = model.generate_content(prompt)
         
-        # Marpヘッダー設定とAIの生成結果を結合して完全な原稿を作成
-        final_marp_content = config.MARP_CONFIG + response.text
-
-        # 結果をJSON形式でフロントエンドに返す
-        return jsonify({"marp_content": final_marp_content})
+        # AIが生成したツイート文をそのままフロントエンドに返す
+        # 【重要】要件に従い、Marpヘッダーの結合処理を削除
+        return jsonify({"marp_content": response.text})
 
     except Exception as e:
         print(f"An error occurred: {e}")
