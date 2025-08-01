@@ -1,6 +1,6 @@
 import os
 import google.generativeai as genai
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
 
@@ -8,6 +8,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
+
+# app.pyから見て、一つ上の階層にある'frontend'フォルダを指定します。
+app = Flask(__name__, static_folder='../frontend', static_url_path='/')
+
 # フロントエンドからのリクエストを許可するための設定
 CORS(app)
 
@@ -21,6 +25,16 @@ except KeyError:
 # モデルを設定
 # 今回は高度な生成タスクなので、高性能なProモデルを指定
 model = genai.GenerativeModel('gemini-1.5-pro-latest') # または 'gemini-2.5-pro' など最新のモデルを指定
+
+@app.route('/')
+def serve_index():
+    """フロントエンドのindex.htmlを配信する"""
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.route('/<path:path>')
+def serve_static_files(path):
+    """frontendフォルダ内の他のファイル（script.jsなど）を配信する"""
+    return send_from_directory(app.static_folder, path)
 
 @app.route('/api/generate', methods=['POST'])
 def generate_marp_content():
@@ -62,4 +76,6 @@ def generate_marp_content():
 
 if __name__ == '__main__':
     # Flaskサーバーをデバッグモードで起動
-    app.run(debug=True)
+    # app.run(debug=True)
+    # 外部からアクセスできるように host='0.0.0.0' を指定
+    app.run(host='0.0.0.0', port=5000, debug=True)
