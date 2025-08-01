@@ -8,6 +8,8 @@
         body { font-family: sans-serif; max-width: 800px; margin: 2em auto; padding: 0 1em; }
         textarea { width: 100%; height: 100px; margin-bottom: 1em; }
         button { padding: 0.5em 1em; cursor: pointer; }
+        .result-header { display: flex; align-items: center; justify-content: space-between; }
+        #copy-button { font-size: 0.8em; }
         #result { margin-top: 1em; padding: 1em; background-color: #f0f0f0; border: 1px solid #ccc; white-space: pre-wrap; font-family: monospace; }
         .loading { color: #888; }
     </style>
@@ -19,7 +21,10 @@
     <textarea id="topic-input" placeholder="例：テレワークの生産性を上げる3つのコツ"></textarea>
     <button id="generate-button">Marp原稿を生成する</button>
 
-    <h2>生成結果：</h2>
+    <div class="result-header">
+        <h2>生成結果：</h2>
+        <button id="copy-button">結果をコピー</button>
+    </div>
     <pre id="result"><code class="language-markdown">ここに結果が表示されます...</code></pre>
 
     <script src="script.js"></script>
