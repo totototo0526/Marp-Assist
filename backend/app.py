@@ -1,6 +1,6 @@
 import os
 import google.generativeai as genai
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
 
@@ -10,7 +10,11 @@ import config
 # .envファイルから環境変数を読み込む
 load_dotenv()
 
-app = Flask(__name__)
+# app.pyから見て、一つ上の階層にある'frontend'フォルダを指定します。
+app = Flask(__name__, static_folder='../frontend', static_url_path='/')
+
+# フロントエンドからのリクエストを許可するための設定
+
 CORS(app)
 
 # Gemini APIキーを設定
@@ -22,6 +26,16 @@ except KeyError:
 
 # モデルをconfigから読み込むように修正
 model = genai.GenerativeModel(config.MODEL_NAME)
+
+@app.route('/')
+def serve_index():
+    """フロントエンドのindex.htmlを配信する"""
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.route('/<path:path>')
+def serve_static_files(path):
+    """frontendフォルダ内の他のファイル（script.jsなど）を配信する"""
+    return send_from_directory(app.static_folder, path)
 
 @app.route('/api/generate', methods=['POST'])
 def generate_marp_content():
@@ -51,4 +65,9 @@ def generate_marp_content():
         return jsonify({"error": "Failed to generate content from AI"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+
+    # Flaskサーバーをデバッグモードで起動
+    # app.run(debug=True)
+    # 外部からアクセスできるように host='0.0.0.0' を指定
+    app.run(host='0.0.0.0', port=5000, debug=True)
+
