@@ -4,11 +4,13 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 
+# 新しく作成した設定ファイルをインポート
+import config
+
 # .envファイルから環境変数を読み込む
 load_dotenv()
 
 app = Flask(__name__)
-# フロントエンドからのリクエストを許可するための設定
 CORS(app)
 
 # Gemini APIキーを設定
@@ -18,48 +20,35 @@ except KeyError:
     print("Error: GEMINI_API_KEY not found. Please set it in the .env file.")
     exit()
 
-# モデルを設定
-# 今回は高度な生成タスクなので、高性能なProモデルを指定
-model = genai.GenerativeModel('gemini-1.5-pro-latest') # または 'gemini-2.5-pro' など最新のモデルを指定
+# モデルをconfigから読み込むように修正
+model = genai.GenerativeModel(config.MODEL_NAME)
 
 @app.route('/api/generate', methods=['POST'])
 def generate_marp_content():
     """フロントエンドからお題を受け取り、Marp原稿を生成して返すAPI"""
     
-    # フロントエンドから送信されたJSONデータを取得
     data = request.get_json()
     if not data or 'topic' not in data:
         return jsonify({"error": "No topic provided"}), 400
 
     topic = data['topic']
 
-    # AIに渡すプロンプト（指示文）を組み立てる
-    # このプロンプトを改良することが、生成品質向上の鍵となる
-    prompt = f"""
-    以下のトピックに関する、X(旧Twitter)投稿用のMarp形式のプレゼンテーションスライドを3枚構成で作成してください。
-
-    # トピック
-    {topic}
-
-    # 条件
-    - 1枚目は、ユーザーの興味を引くキャッチーな見出しと短い導入文にしてください。
-    - 2枚目は、具体的な内容を箇条書きで分かりやすく説明してください。
-    - 3枚目は、簡単なまとめと、関連するハッシュタグを3つ付けてください。
-    - 各スライドは `---` で区切ってください。
-    - 全体はMarpのMarkdown形式で出力してください。
-    """
+    # プロンプトをconfigから読み込み、topicを埋め込むように修正
+    prompt = config.BASE_PROMPT.format(topic=topic)
 
     try:
         # Gemini APIを呼び出してコンテンツを生成
         response = model.generate_content(prompt)
         
+        # Marpヘッダー設定とAIの生成結果を結合して完全な原稿を作成
+        final_marp_content = config.MARP_CONFIG + response.text
+
         # 結果をJSON形式でフロントエンドに返す
-        return jsonify({"marp_content": response.text})
+        return jsonify({"marp_content": final_marp_content})
 
     except Exception as e:
         print(f"An error occurred: {e}")
         return jsonify({"error": "Failed to generate content from AI"}), 500
 
 if __name__ == '__main__':
-    # Flaskサーバーをデバッグモードで起動
     app.run(debug=True)
