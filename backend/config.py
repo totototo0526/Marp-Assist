@@ -18,5 +18,15 @@ class Config:
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
     MODEL_NAME = 'gemini-2.5-pro'
 
+    # --- Marpスライド設定 ---
+    MARP_CONFIG = """\
+---
+marp: true
+theme: default
+size: 16:9
+---
+
+"""
+
 # 設定クラスのインスタンスを作成
 config = Config()
