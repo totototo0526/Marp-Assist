@@ -1,5 +1,14 @@
 # backend/database_setup.py
 
+import sys
+import os
+
+# database_setup.py の親ディレクトリ (backendディレクトリ) のパスを取得
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# backendディレクトリをPythonの検索パスに追加
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
 import uuid
 import psycopg2
 from psycopg2 import sql

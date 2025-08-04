@@ -2,7 +2,7 @@
 
 import psycopg2
 from contextlib import contextmanager
-from ..config import config
+from config import config
 
 def get_db_connection():
     """データベースへの接続を取得する"""
