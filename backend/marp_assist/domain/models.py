@@ -1,4 +1,5 @@
-# backend/marp_assist/domain/models.py
+# アプリケーションの核となるビジネスオブジェクト（エンティティ）を定義します。
+# まずはTemplateモデルを定義しましょう。
 
 from dataclasses import dataclass
 from typing import List, Optional

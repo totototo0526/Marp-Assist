@@ -1,4 +1,4 @@
-# backend/marp_assist/infrastructure/database.py
+# データベースへの接続と切断を管理する、基本的な仕組みをここに実装します。
 
 import psycopg2
 from contextlib import contextmanager
