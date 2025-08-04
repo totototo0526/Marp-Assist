@@ -78,12 +78,57 @@ def insert_marp_template():
             conn.commit()
             print(f"✅ 新しいテンプレート '{template['template_name']}' を追加しました。")
 
+def insert_weekend_it_slides_template():
+    """
+    「週末天気とITあるある」スライド用の新しいテンプレートを挿入する。
+    """
+    template = {
+        "template_id": str(uuid.uuid4()),
+        "template_name": "weekend_it_slides",
+        "label": "週末天気とITあるあるスライド",
+        "persona": "あなたは、IT業界のトレンドや「あるある」ネタに詳しい、親しみやすいウェブライターです。週末の予定に役立つ情報を、面白おかしく伝えるのが得意です。",
+        "output_type": "marp",
+        "tone_and_manner": "親しみやすく、少しユーモアを交えて",
+        "target_audience": "週末の予定を立てたいと考えているITエンジニア",
+        "keywords": ["天気", "ITあるある", "週末", "プログラミング"],
+        "banned_words": None,
+    }
+
+    with db_session() as conn:
+        with conn.cursor() as cur:
+            # 既に存在するかチェック
+            cur.execute("SELECT 1 FROM templates WHERE template_name = %s;", (template["template_name"],))
+            if cur.fetchone():
+                print(f"ℹ️ テンプレート '{template['template_name']}' は既に存在します。")
+                return
+
+            # 挿入クエリ
+            query = sql.SQL("""
+                INSERT INTO templates (template_id, template_name, label, persona, output_type, tone_and_manner, target_audience, keywords, banned_words)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """)
+            cur.execute(query, (
+                template["template_id"],
+                template["template_name"],
+                template["label"],
+                template["persona"],
+                template["output_type"],
+                template["tone_and_manner"],
+                template["target_audience"],
+                template["keywords"],
+                template["banned_words"]
+            ))
+            conn.commit()
+            print(f"✅ 新しいテンプレート '{template['template_name']}' を追加しました。")
+
+
 def main():
     """データベースのセットアップ処理を実行する"""
     print("データベースのセットアップを開始します...")
     add_output_type_column()
     update_existing_templates()
     insert_marp_template()
+    insert_weekend_it_slides_template()
     print("データベースのセットアップが完了しました。")
 
 if __name__ == "__main__":
