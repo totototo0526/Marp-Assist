@@ -1,4 +1,4 @@
-# backend/marp_assist/__init__.py
+# Flaskアプリケーションのインスタンスを作成する「Application Factory」と呼ばれる部分です。
 
 from flask import Flask
 from flask_cors import CORS

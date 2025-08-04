@@ -1,4 +1,5 @@
-# backend/config.py
+# アプリケーション全体で使われる設定値を管理します。
+# .envファイルからデータベースの接続情報などを読み込みます。
 
 import os
 from dotenv import load_dotenv

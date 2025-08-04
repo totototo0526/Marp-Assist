@@ -1,4 +1,4 @@
-# backend/run.py
+# アプリケーションを起動するための、新しいエントリーポイント（実行ファイル）です。
 
 from marp_assist import create_app
 
