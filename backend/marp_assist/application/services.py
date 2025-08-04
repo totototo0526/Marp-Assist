@@ -3,7 +3,7 @@
 
 import google.generativeai as genai
 from ..infrastructure.repositories import TemplateRepository
-from config import config
+from ..config import config
 
 class PromptService:
     def __init__(self):
