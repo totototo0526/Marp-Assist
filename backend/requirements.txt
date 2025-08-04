@@ -2,3 +2,4 @@ flask
 python-dotenv
 google-generativeai
 Flask-Cors
+psycopg2-binary
