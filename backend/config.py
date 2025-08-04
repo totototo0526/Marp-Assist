@@ -1,24 +1,24 @@
 # アプリケーション全体で使われる設定値を管理します。
-# .envファイルからデータベースの接続情報などを読み込みます。
-
+# ~/Marp-Assist/backend/config.py
 import os
 from dotenv import load_dotenv
 
-# .envファイルから環境変数を読み込む
-load_dotenv()
+# FLASK_ENV 環境変数に基づいて適切な .env ファイルを読み込む
+flask_env = os.getenv('FLASK_ENV', 'development') # デフォルトは development
+dotenv_path = os.path.join(os.path.dirname(__file__), f'.env.{flask_env}')
+load_dotenv(dotenv_path)
 
 class Config:
-    """アプリケーションの設定を管理するクラス"""
-    
-    # --- データベース設定 ---
-    # .envファイルからデータベース接続URLを取得
-    DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@host:port/dbname")
-    
-    # --- AIモデル設定 ---
+    DATABASE_URL = os.getenv("DATABASE_URL")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-    MODEL_NAME = 'gemini-2.5-pro'
+    MODEL_NAME = os.getenv("MODEL_NAME", 'gemini-2.5-pro') # .env にMODEL_NAMEを追加しても良い
 
-    # --- Marpスライド設定 ---
+    DEBUG = os.getenv("DEBUG", "False").lower() == 'true'
+    TESTING = os.getenv("TESTING", "False").lower() == 'true'
+
+    # Gunicorn がバインドするアドレスとポートも設定として持っておくと便利
+    GUNICORN_BIND_ADDRESS = os.getenv("GUNICORN_BIND_ADDRESS", "127.0.0.1:8000")
+
     MARP_CONFIG = """\
 ---
 marp: true
