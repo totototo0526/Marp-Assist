@@ -14,9 +14,34 @@ import psycopg2
 from psycopg2 import sql
 from .marp_assist.infrastructure.database import db_session
 
+def create_tables():
+    """
+    アプリケーションに必要なテーブルを定義し、存在しない場合に作成する。
+    """
+    with db_session() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS templates (
+                    template_id VARCHAR(36) PRIMARY KEY,
+                    template_name VARCHAR(255) UNIQUE NOT NULL,
+                    label VARCHAR(255),
+                    persona TEXT,
+                    output_type VARCHAR(50),
+                    tone_and_manner TEXT,
+                    target_audience TEXT,
+                    keywords TEXT[],
+                    banned_words TEXT[],
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+            conn.commit()
+            print("✅ `templates`テーブルが正常に確認・作成されました。")
+
 def add_output_type_column():
     """
     templatesテーブルにoutput_typeカラムがなければ追加する。
+    (この関数はcreate_tablesに統合されたため、将来的に削除される可能性があります)
     """
     with db_session() as conn:
         with conn.cursor() as cur:
@@ -132,13 +157,24 @@ def insert_weekend_it_slides_template():
 
 
 def main():
-    """データベースのセットアップ処理を実行する"""
+    """データベースのセットアップ処理を正しい順序で実行する"""
     print("データベースのセットアップを開始します...")
-    add_output_type_column()
-    update_existing_templates()
+
+    # 1. テーブル構造を定義・作成する
+    create_tables()
+
+    # 2. 初期データを挿入する
+    #    (UNIQUE制約があるため、再実行しても問題ない)
     insert_marp_template()
     insert_weekend_it_slides_template()
-    print("データベースのセットアップが完了しました。")
+
+    # 3. 既存のデータを更新する
+    #    (NULLのものを更新するので、再実行しても問題ない)
+    update_existing_templates()
+
+    # add_output_type_column() は create_tables() に統合されたため不要
+
+    print("✅ データベースのセットアップが正常に完了しました。")
 
 if __name__ == "__main__":
     # このスクリプトが直接実行された場合にmain()を呼び出す
