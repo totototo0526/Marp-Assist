@@ -46,4 +46,12 @@ class PromptService:
 以上の情報に基づき、コンテンツを生成してください。
 """
         response = self.model.generate_content(prompt)
-        return response.text
+        generated_text = response.text
+
+        # output_typeに応じて後処理を分岐
+        if target_template.output_type == 'marp':
+            # Marpの場合は、設定情報を先頭に結合する
+            return config.MARP_CONFIG + generated_text
+        else:
+            # それ以外の場合は、生成されたテキストをそのまま返す
+            return generated_text
