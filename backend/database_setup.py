@@ -3,7 +3,7 @@
 import uuid
 import psycopg2
 from psycopg2 import sql
-from marp_assist.infrastructure.database import db_session
+from .marp_assist.infrastructure.database import db_session
 
 def add_output_type_column():
     """
