@@ -27,8 +27,8 @@ class PromptService:
         if not self.model:
             raise Exception("AIモデルが利用できません。")
 
-        templates = self.template_repo.get_all()
-        target_template = next((t for t in templates if t.name == template_name), None)
+        # template_repo.get_all() を find_by_name() に置き換えて効率化
+        target_template = self.template_repo.find_by_name(template_name)
 
         if not target_template:
             raise ValueError(f"テンプレート '{template_name}' が見つかりません。")
