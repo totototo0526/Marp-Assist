@@ -20,7 +20,7 @@ class PromptService:
         """全てのテンプレートの基本情報（名前とラベル）を取得する"""
         templates = self.template_repo.get_all()
         # フロントエンドが必要な情報だけを辞書のリストに変換
-        return [{"name": t.name, "label": t.label} for t in templates]
+        return [{"name": t.template_name, "label": t.label} for t in templates]
 
     def generate_content(self, topic: str, template_name: str) -> str:
         """指定されたトピックとテンプレート名でコンテンツを生成する"""

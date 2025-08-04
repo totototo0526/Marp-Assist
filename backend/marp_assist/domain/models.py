@@ -11,6 +11,7 @@ class Template:
     """AIへの指示テンプレートを表すドメインモデル"""
     template_id: uuid.UUID
     template_name: str
+    label: Optional[str]
     output_type: str
     persona: Optional[str]
     tone_and_manner: Optional[str]
