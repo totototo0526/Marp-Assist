@@ -18,6 +18,14 @@
     <h1>AI Marp 原稿ジェネレーター (MVP)</h1>
     <p>投稿したいお題やキーワードを入力してください。</p>
     
+    <div>
+      <label for="template-select">テンプレート選択:</label>
+      <select id="template-select" name="templates">
+        <!-- Options will be populated by script.js -->
+      </select>
+    </div>
+    <br>
+
     <textarea id="topic-input" placeholder="例：テレワークの生産性を上げる3つのコツ"></textarea>
     <button id="generate-button">Marp原稿を生成する</button>
 
