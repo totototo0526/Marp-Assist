@@ -7,7 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const templateSelect = document.getElementById('template-select'); // ドロップダウンを追加
 
     // バックエンドAPIのURL
-    const API_BASE_URL = 'http://127.0.0.1:5000/api';
+    // const API_BASE_URL = 'http://127.0.0.1:5000/api';
+    const API_BASE_URL = '/api';
     const GENERATE_API_URL = `${API_BASE_URL}/generate`;
     const TEMPLATES_API_URL = `${API_BASE_URL}/templates`;
 
