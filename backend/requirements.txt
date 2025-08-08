@@ -1,5 +1,5 @@
 flask
 python-dotenv
-google-generativeai
+requests
 Flask-Cors
 psycopg2-binary
