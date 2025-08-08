@@ -3,12 +3,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const topicInput = document.getElementById('topic-input');
     const generateButton = document.getElementById('generate-button');
     const copyButton = document.getElementById('copy-button');
+    const downloadPdfButton = document.getElementById('download-pdf-button');
     const resultArea = document.getElementById('result');
     const templateSelect = document.getElementById('template-select'); // ドロップダウンを追加
 
     // バックエンドAPIのURL (相対パスに変更)
     const API_BASE_URL = '/api';
     const GENERATE_API_URL = `${API_BASE_URL}/generate`;
+    const DOWNLOAD_PDF_API_URL = `${API_BASE_URL}/download_pdf`;
     const TEMPLATES_API_URL = `${API_BASE_URL}/templates`;
 
     // コピーボタンの初期のテキスト
@@ -55,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // ボタンを無効化し、ローディング表示
         generateButton.disabled = true;
+        downloadPdfButton.disabled = true; // PDFボタンも無効化
         resultArea.textContent = 'AIが生成中です...';
         resultArea.classList.add('loading');
 
@@ -77,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             // 結果を表示 (バックエンドからのキーを`content`に合わせる)
             resultArea.textContent = data.content;
+            downloadPdfButton.disabled = false; // 成功したらPDFボタンを有効化
 
         } catch (error) {
             console.error('Error:', error);
@@ -101,6 +105,53 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('コピーに失敗しました', err);
                 alert('クリップボードへのコピーに失敗しました。');
             });
+        }
+    });
+
+    // PDFダウンロードボタンのクリックイベント
+    downloadPdfButton.addEventListener('click', async () => {
+        const markdownContent = resultArea.textContent;
+
+        if (!markdownContent || resultArea.classList.contains('loading') || markdownContent.startsWith('ここに結果が') || markdownContent.startsWith('エラーが発生')) {
+            alert('PDF化できるコンテンツがありません。');
+            return;
+        }
+
+        downloadPdfButton.disabled = true;
+        const originalButtonText = downloadPdfButton.textContent;
+        downloadPdfButton.textContent = 'PDF生成中...';
+
+        try {
+            const response = await fetch(DOWNLOAD_PDF_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ markdown: markdownContent }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'PDFの生成に失敗しました。');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'presentation.pdf';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+        } catch (error) {
+            console.error('PDF Download Error:', error);
+            alert(`エラーが発生しました：${error.message}`);
+        } finally {
+            downloadPdfButton.disabled = false;
+            downloadPdfButton.textContent = originalButtonText;
         }
     });
 });

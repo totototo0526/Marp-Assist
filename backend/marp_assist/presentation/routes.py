@@ -1,8 +1,11 @@
 # Webリクエストの受付（APIエンドポイント）を担当します。
 # Serviceを呼び出し、結果をJSONとして返します。
-
-from flask import Blueprint, request, jsonify
+import requests
+import io
+from flask import Blueprint, request, jsonify, send_file
 from ..application.services import PromptService
+from config import config
+
 
 # Blueprintを作成
 bp = Blueprint('presentation', __name__, url_prefix='/api')
@@ -16,6 +19,41 @@ def get_templates():
         templates = prompt_service.get_all_templates()
         return jsonify(templates)
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@bp.route('/download_pdf', methods=['POST'])
+def download_pdf():
+    """MarkdownをPDFに変換してダウンロードさせるAPI"""
+    data = request.get_json()
+    if not data or 'markdown' not in data:
+        return jsonify({"error": "markdown content is required"}), 400
+
+    markdown_content = data['markdown']
+
+    try:
+        # marp-apiサービスにリクエストを送信
+        response = requests.post(
+            config.MARP_API_URL,
+            json={'markdown': markdown_content},
+            timeout=30 # タイムアウトを30秒に設定
+        )
+
+        # レスポンスステータスコードをチェック
+        response.raise_for_status()
+
+        # PDFデータをバイナリとしてクライアントに送信
+        return send_file(
+            io.BytesIO(response.content),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name='presentation.pdf'
+        )
+
+    except requests.exceptions.RequestException as e:
+        # marp-apiへの接続エラー
+        return jsonify({"error": f"Failed to connect to marp-api: {e}"}), 503
+    except Exception as e:
+        # その他のエラー
         return jsonify({"error": str(e)}), 500
 
 @bp.route('/generate', methods=['POST'])
