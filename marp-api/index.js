@@ -28,12 +28,18 @@ app.post('/convert', (req, res) => {
         }
         console.log('Temporary file created successfully.');
 
-        // Explicitly use 'node' to run the marp-cli script to avoid PATH/shebang issues.
         const marpCliScriptPath = path.join(__dirname, 'node_modules', '@marp-team', 'marp-cli', 'marp-cli.js');
         const command = `node ${marpCliScriptPath} ${tempMarkdownPath} --pdf --allow-local-files -o -`;
         console.log(`Executing command: ${command}`);
 
-        exec(command, { encoding: 'binary', maxBuffer: 10 * 1024 * 1024 }, (error, stdout, stderr) => {
+        // Set the CWD to the marp-cli package directory to ensure it can find its own modules.
+        const marpCliDir = path.dirname(marpCliScriptPath);
+
+        exec(command, {
+            encoding: 'binary',
+            maxBuffer: 10 * 1024 * 1024,
+            cwd: marpCliDir
+        }, (error, stdout, stderr) => {
             fs.unlink(tempMarkdownPath, (unlinkErr) => {
                 if (unlinkErr) {
                     console.error(`Failed to delete temp file '${tempMarkdownPath}': ${unlinkErr}`);
