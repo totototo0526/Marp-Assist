@@ -28,9 +28,9 @@ app.post('/convert', (req, res) => {
         }
         console.log('Temporary file created successfully.');
 
-        // Use the locally installed marp-cli executable instead of npx
-        const marpCliPath = path.join(__dirname, 'node_modules', '.bin', 'marp');
-        const command = `${marpCliPath} ${tempMarkdownPath} --pdf --allow-local-files -o -`;
+        // Explicitly use 'node' to run the marp-cli script to avoid PATH/shebang issues.
+        const marpCliScriptPath = path.join(__dirname, 'node_modules', '@marp-team', 'marp-cli', 'marp-cli.js');
+        const command = `node ${marpCliScriptPath} ${tempMarkdownPath} --pdf --allow-local-files -o -`;
         console.log(`Executing command: ${command}`);
 
         exec(command, { encoding: 'binary', maxBuffer: 10 * 1024 * 1024 }, (error, stdout, stderr) => {
