@@ -4,7 +4,7 @@ import requests
 import io
 from flask import Blueprint, request, jsonify, send_file
 from ..application.services import PromptService
-from ...config import config
+from backend.config import config
 
 
 # Blueprintを作成
