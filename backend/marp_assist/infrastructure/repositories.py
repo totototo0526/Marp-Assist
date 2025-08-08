@@ -7,27 +7,29 @@ from typing import List, Optional
 
 class TemplateRepository:
     def _map_row_to_template(self, row) -> Template:
-        """DBの行データをTemplateオブジェクトにマッピングするヘルパー関数"""
+        """DBの行データ（辞書）をTemplateオブジェクトにマッピングするヘルパー関数"""
+        # DictCursorから受け取ったrowは辞書ライクなオブジェクト
         return Template(
-            template_id=row[0],
-            template_name=row[1],
-            label=row[2],
-            output_type=row[3],
-            persona=row[4],
-            tone_and_manner=row[5],
-            target_audience=row[6],
-            keywords=row[7],
-            banned_words=row[8]
+            template_id=row['template_id'],
+            template_name=row['template_name'],
+            label=row['label'],
+            output_type=row['output_type'],
+            persona=row['persona'],
+            tone_and_manner=row['tone_and_manner'],
+            target_audience=row['target_audience'],
+            keywords=row['keywords'],
+            banned_words=row['banned_words']
         )
 
     def get_all(self) -> List[Template]:
         """DBから全てのテンプレートを取得する"""
         templates = []
-        # SELECTするカラムのリストを定義してDRYにする
-        columns = "template_id, template_name, label, output_type, persona, tone_and_manner, target_audience, keywords, banned_words"
         with db_session() as conn:
+            # DictCursorを使うように修正
             with conn.cursor() as cur:
-                cur.execute(f"SELECT {columns} FROM templates ORDER BY created_at DESC")
+                # SELECT * を使い、モデルで必要な全てのカラムを取得する
+                # ORDER BY句で使うcreated_atもこれで取得できる
+                cur.execute("SELECT * FROM templates ORDER BY created_at DESC")
                 rows = cur.fetchall()
                 for row in rows:
                     templates.append(self._map_row_to_template(row))
@@ -35,13 +37,11 @@ class TemplateRepository:
 
     def find_by_name(self, name: str) -> Optional[Template]:
         """指定された名前のテンプレートを1件取得する (生成時に使用)"""
-        # SELECTするカラムのリストを定義してDRYにする
-        columns = "template_id, template_name, label, output_type, persona, tone_and_manner, target_audience, keywords, banned_words"
         with db_session() as conn:
+            # DictCursorを使うように修正
             with conn.cursor() as cur:
-                cur.execute(f"SELECT {columns} FROM templates WHERE template_name = %s", (name,))
+                cur.execute("SELECT * FROM templates WHERE template_name = %s", (name,))
                 row = cur.fetchone()
                 if row:
                     return self._map_row_to_template(row)
         return None
-
