@@ -11,35 +11,45 @@ const port = 3000;
 app.use(express.json({ limit: '10mb' }));
 
 app.post('/convert', (req, res) => {
+    console.log('Received request for /convert');
     const markdown = req.body.markdown;
     if (!markdown) {
+        console.error('Request failed: Markdown content is required.');
         return res.status(400).send('Markdown content is required.');
     }
 
     // Create a temporary file to store the markdown content
     const tempMarkdownPath = path.join(os.tmpdir(), `temp-marp-${Date.now()}.md`);
+    console.log(`Creating temporary file at: ${tempMarkdownPath}`);
 
     fs.writeFile(tempMarkdownPath, markdown, (writeErr) => {
         if (writeErr) {
             console.error(`File write error: ${writeErr}`);
             return res.status(500).send('Failed to create temporary markdown file.');
         }
+        console.log('Temporary file created successfully.');
 
         // Execute marp-cli to convert markdown to PDF, outputting to stdout
         const command = `npx @marp-team/marp-cli@latest ${tempMarkdownPath} --pdf --allow-local-files -o -`;
+        console.log(`Executing command: ${command}`);
 
         exec(command, { encoding: 'binary', maxBuffer: 10 * 1024 * 1024 }, (error, stdout, stderr) => {
             // Clean up the temporary file
             fs.unlink(tempMarkdownPath, (unlinkErr) => {
-                if (unlinkErr) console.error(`Failed to delete temp file: ${unlinkErr}`);
+                if (unlinkErr) {
+                    console.error(`Failed to delete temp file '${tempMarkdownPath}': ${unlinkErr}`);
+                } else {
+                    console.log(`Successfully deleted temp file: ${tempMarkdownPath}`);
+                }
             });
 
             if (error) {
                 console.error(`Marp CLI exec error: ${error}`);
                 console.error(`Marp CLI stderr: ${stderr}`);
-                return res.status(500).send('Failed to convert markdown to PDF.');
+                return res.status(500).send(`Failed to convert markdown to PDF. Stderr: ${stderr}`);
             }
 
+            console.log('Marp CLI execution successful. Sending PDF response.');
             // Send the generated PDF as a response
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', 'attachment; filename=presentation.pdf');
