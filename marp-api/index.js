@@ -1,20 +1,19 @@
 const express = require('express');
-const { execFile } = require('child_process');
+const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
 const app = express();
 const port = 3000;
+const host = '0.0.0.0';
 
-// Increase payload size limit for incoming JSON
 app.use(express.json({ limit: '10mb' }));
 
 app.post('/convert', (req, res) => {
     console.log('Received request for /convert');
     const markdown = req.body.markdown;
     if (!markdown) {
-        console.error('Request failed: Markdown content is required.');
         return res.status(400).send('Markdown content is required.');
     }
 
@@ -36,39 +35,49 @@ app.post('/convert', (req, res) => {
             tempMarkdownPath,
             '--pdf',
             '--allow-local-files',
-            '--verbose', // Add verbose flag for detailed logging
+            '--engine-options', '{"executablePath": "/usr/bin/google-chrome", "headless": "new", "args": ["--no-sandbox", "--disable-setuid-sandbox"]}',
             '-o',
             '-'
         ];
 
         console.log(`Executing command: ${program} ${args.join(' ')}`);
 
-        execFile(program, args, {
-            encoding: 'binary',
-            maxBuffer: 10 * 1024 * 1024
-        }, (error, stdout, stderr) => {
-            fs.unlink(tempMarkdownPath, (unlinkErr) => {
-                if (unlinkErr) {
-                    console.error(`Failed to delete temp file '${tempMarkdownPath}': ${unlinkErr}`);
-                } else {
-                    console.log(`Successfully deleted temp file: ${tempMarkdownPath}`);
-                }
-            });
+        const marpProcess = spawn(program, args);
 
-            if (error) {
-                console.error(`Marp CLI execFile error: ${error}`);
-                console.error(`Marp CLI stderr: ${stderr}`);
-                return res.status(500).send(`Failed to convert markdown to PDF. Stderr: ${stderr}`);
-            }
+        // --- ここからが修正部分：より堅牢なストリーム処理 ---
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=presentation.pdf');
 
-            console.log('Marp CLI execution successful. Sending PDF response.');
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', 'attachment; filename=presentation.pdf');
-            res.status(200).send(Buffer.from(stdout, 'binary'));
+        // marp-cliの標準出力を、直接レスポンスのストリームに流し込む
+        marpProcess.stdout.pipe(res);
+
+        let errorOutput = '';
+        marpProcess.stderr.on('data', (data) => {
+            const stderrStr = data.toString();
+            console.error(`Marp CLI stderr: ${stderrStr}`);
+            errorOutput += stderrStr;
         });
+
+        marpProcess.on('close', (code) => {
+            console.log(`Marp CLI process exited with code ${code}`);
+            fs.unlink(tempMarkdownPath, () => {}); // 一時ファイルを削除
+
+            if (code !== 0) {
+                console.error('Marp CLI process failed.');
+                // ストリームはすでに閉じられているので、ここではログに残すだけ
+            }
+        });
+
+        marpProcess.on('error', (err) => {
+            console.error('Failed to start Marp CLI process.', err);
+            if (!res.headersSent) {
+                res.status(500).send('Failed to start PDF generation process.');
+            }
+        });
+        // --- ここまでが修正部分 ---
     });
 });
 
-app.listen(port, () => {
-    console.log(`Marp API server listening at http://localhost:${port}`);
+app.listen(port, host, () => {
+    console.log(`Server is running on http://${host}:${port}`);
 });

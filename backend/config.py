@@ -19,7 +19,8 @@ class Config:
 
     # Gunicorn がバインドするアドレスとポートも設定として持っておくと便利
     GUNICORN_BIND_ADDRESS = os.getenv("GUNICORN_BIND_ADDRESS", "127.0.0.1:8000")
-    MARP_API_URL = os.getenv("MARP_API_URL", "http://127.0.0.1:3000/convert")
+    # MARP_API_URL = os.getenv("MARP_API_URL", "http://127.0.0.1:3000/convert")
+    MARP_API_URL = os.getenv("MARP_API_URL", "http://210.131.209.237:3000/convert")
 
     MARP_CONFIG = """\
 ---
