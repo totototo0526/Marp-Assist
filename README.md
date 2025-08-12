@@ -12,8 +12,23 @@ AIを活用して、SNS投稿用のMarp形式の下書きを生成するアプ�
 2. `pip install -r requirements.txt`
 3. `python run.py`
 
-### フロントエンド
-1. `frontend/index.html` をブラウザで開く
+### フロントエンド (Vite)
+
+**Note:** プレビュー機能の実装に伴い、フロントエンドはViteによるビルド環境に移行しました。
+
+1. `frontend`ディレクトリに移動します。
+   ```sh
+   cd frontend
+   ```
+2. (初回のみ) 依存ライブラリをインストールします。
+   ```sh
+   npm install
+   ```
+3. 開発サーバーを起動します。
+   ```sh
+   npm run dev
+   ```
+4. ブラウザで `http://localhost:5173` などの表示されたURLにアクセスします。
 
 ---
 
