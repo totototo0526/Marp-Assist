@@ -35,7 +35,7 @@ def download_pdf():
         response = requests.post(
             config.MARP_API_URL,
             json={'markdown': markdown_content},
-            timeout=30 # タイムアウトを30秒に設定
+            timeout=120 # タイムアウトを120秒に設定
         )
 
         # レスポンスステータスコードをチェック
