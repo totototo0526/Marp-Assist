@@ -1,3 +1,5 @@
+import Marpit from '@marp-team/marpit';
+
 document.addEventListener('DOMContentLoaded', () => {
     // DOM要素の取得
     const topicInput = document.getElementById('topic-input');
@@ -10,8 +12,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const marpOptionsContainer = document.getElementById('marp-options-container');
     const slideCountInput = document.getElementById('slide-count-input');
     const includeHashtagsCheckbox = document.getElementById('include-hashtags-checkbox');
+    const previewArea = document.getElementById('preview-area');
+
+    // Marpitのインスタンスを初期化
+    const marpit = new Marpit();
 
     // バックエンドAPIのURL
+    // Viteのプロキシ設定により、開発サーバーではリクエストがバックエンドに転送される
     const API_BASE_URL = '/api';
     const GENERATE_API_URL = `${API_BASE_URL}/generate`;
     const DOWNLOAD_PDF_API_URL = `${API_BASE_URL}/download_pdf`;
@@ -23,6 +30,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // テンプレート情報を保持する変数
     let allTemplates = [];
+
+    // --- プレビュー更新処理 ---
+    const updatePreview = () => {
+        const markdown = resultTextarea.value;
+        const { html, css } = marpit.render(markdown);
+        // プレビューエリアにスタイルとHTMLを適用
+        previewArea.innerHTML = `<style>${css}</style>${html}`;
+    };
 
     // テンプレートをバックエンドから取得してドロップダウンを生成する関数
     async function populateTemplates() {
@@ -78,10 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ページ読み込み時にテンプレートとテーマを取得
-    populateTemplates();
-    populateThemes();
-
     // 生成ボタンのクリックイベント
     generateButton.addEventListener('click', async () => {
         const topic = topicInput.value;
@@ -101,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
         downloadPdfButton.disabled = true;
         resultTextarea.value = 'AIが生成中です...';
         resultTextarea.classList.add('loading');
+        updatePreview(); // ローディングメッセージもプレビュー
 
         // リクエストボディを構築
         const requestBody = {
@@ -132,10 +144,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             resultTextarea.value = data.content;
             downloadPdfButton.disabled = false;
+            updatePreview(); // AI生成後にプレビューを更新
 
         } catch (error) {
             console.error('Error:', error);
             resultTextarea.value = `エラーが発生しました：${error.message}`;
+            updatePreview(); // エラーメッセージもプレビュー
             alert(`エラーが発生しました：${error.message}`);
         } finally {
             generateButton.disabled = false;
@@ -145,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // コピーボタンのクリックイベント
     copyButton.addEventListener('click', () => {
-        const textToCopy = resultTextarea.value; // .textContentから.valueへ変更
+        const textToCopy = resultTextarea.value;
         const placeholderText = 'ここに結果が表示されます...';
         if (textToCopy && textToCopy !== placeholderText && !textToCopy.startsWith('AIが生成中') && !textToCopy.startsWith('エラーが発生')) {
             navigator.clipboard.writeText(textToCopy).then(() => {
@@ -162,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // PDFダウンロードボタンのクリックイベント
     downloadPdfButton.addEventListener('click', async () => {
-        const markdownContent = resultTextarea.value; // .textContentから.valueへ変更
+        const markdownContent = resultTextarea.value;
         const placeholderText = 'ここに結果が表示されます...';
 
         if (!markdownContent || markdownContent === placeholderText || markdownContent.startsWith('AIが生成中') || markdownContent.startsWith('エラーが発生')) {
@@ -207,4 +221,12 @@ document.addEventListener('DOMContentLoaded', () => {
             downloadPdfButton.textContent = originalButtonText;
         }
     });
+
+    // テキストエリアでの入力に反応してプレビューを更新
+    resultTextarea.addEventListener('input', updatePreview);
+
+    // --- 初期化処理 ---
+    populateTemplates();
+    populateThemes();
+    updatePreview(); // 初期表示のためにプレビューを一度実行
 });
