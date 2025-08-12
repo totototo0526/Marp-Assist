@@ -74,10 +74,18 @@ def generate():
 
     topic = data['topic']
     template_name = data['template_name']
-    theme_id = data.get('theme_id') # theme_idはオプショナル
+    theme_id = data.get('theme_id')
+    slide_count = data.get('slide_count')
+    include_hashtags = data.get('include_hashtags')
 
     try:
-        content = prompt_service.generate_content(topic, template_name, theme_id)
+        content = prompt_service.generate_content(
+            topic=topic,
+            template_name=template_name,
+            theme_id=theme_id,
+            slide_count=slide_count,
+            include_hashtags=include_hashtags
+        )
         return jsonify({"content": content})
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
