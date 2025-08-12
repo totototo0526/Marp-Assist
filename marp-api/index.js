@@ -35,7 +35,7 @@ app.post('/convert', (req, res) => {
             tempMarkdownPath,
             '--pdf',
             '--allow-local-files',
-            '--engine-options', '{"executablePath": "/usr/bin/google-chrome", "headless": "new", "args": ["--no-sandbox", "--disable-setuid-sandbox", "--user-data-dir=/tmp/marp-chrome-profile"]}',
+            '--engine-options', '{"executablePath": "/usr/bin/google-chrome", "headless": "new", "args": ["--no-sandbox", "--disable-setuid-sandbox", "--user-data-dir=/tmp/marp-chrome-profile", "--disable-dev-shm-usage", "--disable-gpu"]}',
             '-o',
             '-'
         ];
