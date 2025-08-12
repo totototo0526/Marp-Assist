@@ -18,8 +18,7 @@ class ThemeRepository:
         themes = []
         with db_session() as conn:
             with conn.cursor() as cur:
-                # ID順でソートして、表示順を安定させる
-                cur.execute("SELECT theme_id, theme_name, marp_config FROM themes ORDER BY theme_id")
+                cur.execute("SELECT theme_id, theme_name, marp_config FROM themes")
                 rows = cur.fetchall()
                 for row in rows:
                     themes.append(self._map_row_to_theme(row))
@@ -57,19 +56,11 @@ class TemplateRepository:
         """DBから全てのテンプレートを取得する"""
         templates = []
         with db_session() as conn:
+            # DictCursorを使うように修正
             with conn.cursor() as cur:
-                # SELECT * を避け、必要なカラムを明示的に指定することで、
-                # DBスキーマとの不整合によるKeyErrorを防ぐ
-                sql = """
-                    SELECT
-                        template_id, template_name, label, output_type,
-                        persona, tone_and_manner, target_audience,
-                        keywords, banned_words, theme_id, slide_count,
-                        include_hashtags, created_at
-                    FROM templates
-                    ORDER BY created_at DESC
-                """
-                cur.execute(sql)
+                # SELECT * を使い、モデルで必要な全てのカラムを取得する
+                # ORDER BY句で使うcreated_atもこれで取得できる
+                cur.execute("SELECT * FROM templates ORDER BY created_at DESC")
                 rows = cur.fetchall()
                 for row in rows:
                     templates.append(self._map_row_to_template(row))
