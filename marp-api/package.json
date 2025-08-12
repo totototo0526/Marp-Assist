@@ -1,7 +1,6 @@
 {
   "name": "marp-api",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -13,5 +12,6 @@
   "dependencies": {
     "@marp-team/marp-cli": "^3.4.0",
     "express": "^5.1.0"
-  }
+  },
+  "description": ""
 }
