@@ -12,12 +12,15 @@ class Config:
     DATABASE_URL = os.getenv("DATABASE_URL")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
     MODEL_NAME = os.getenv("MODEL_NAME", 'gemini-2.5-pro') # .env にMODEL_NAMEを追加しても良い
+    AXON_GATEWAY_URL = os.getenv("AXON_GATEWAY_URL", "http://127.0.0.1:8001/api/v1/generate")
 
     DEBUG = os.getenv("DEBUG", "False").lower() == 'true'
     TESTING = os.getenv("TESTING", "False").lower() == 'true'
 
     # Gunicorn がバインドするアドレスとポートも設定として持っておくと便利
     GUNICORN_BIND_ADDRESS = os.getenv("GUNICORN_BIND_ADDRESS", "127.0.0.1:8000")
+    # MARP_API_URL = os.getenv("MARP_API_URL", "http://127.0.0.1:3000/convert")
+    MARP_API_URL = os.getenv("MARP_API_URL", "http://210.131.209.237:3000/convert")
 
     MARP_CONFIG = """\
 ---
