@@ -21,6 +21,15 @@ def get_templates():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@bp.route('/themes', methods=['GET'])
+def get_themes():
+    """利用可能なテーマの一覧を返すAPI"""
+    try:
+        themes = prompt_service.get_all_themes()
+        return jsonify(themes)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @bp.route('/download_pdf', methods=['POST'])
 def download_pdf():
     """MarkdownをPDFに変換してダウンロードさせるAPI"""
@@ -63,8 +72,12 @@ def generate():
     if not data or 'topic' not in data or 'template_name' not in data:
         return jsonify({"error": "topicとtemplate_nameは必須です"}), 400
 
+    topic = data['topic']
+    template_name = data['template_name']
+    theme_id = data.get('theme_id') # theme_idはオプショナル
+
     try:
-        content = prompt_service.generate_content(data['topic'], data['template_name'])
+        content = prompt_service.generate_content(topic, template_name, theme_id)
         return jsonify({"content": content})
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
