@@ -27,10 +27,14 @@
         .editor-column {
             display: flex;
             flex-direction: column;
+            position: relative;
+            z-index: 2;
         }
         .preview-column {
             border-left: 1px solid #ccc;
             background-color: #f9f9f9;
+            position: relative;
+            z-index: 1;
         }
         #preview-area {
             width: 100%;
