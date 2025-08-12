@@ -18,7 +18,7 @@ class ThemeRepository:
         themes = []
         with db_session() as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT theme_id, theme_name, marp_config FROM themes ORDER BY created_at ASC")
+                cur.execute("SELECT theme_id, theme_name, marp_config FROM themes")
                 rows = cur.fetchall()
                 for row in rows:
                     themes.append(self._map_row_to_theme(row))
