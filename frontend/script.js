@@ -4,19 +4,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const generateButton = document.getElementById('generate-button');
     const copyButton = document.getElementById('copy-button');
     const downloadPdfButton = document.getElementById('download-pdf-button');
-    const resultTextarea = document.getElementById('result-textarea'); // <pre>から<textarea>に変更
+    const resultTextarea = document.getElementById('result-textarea');
     const templateSelect = document.getElementById('template-select');
-    const themeSelect = document.getElementById('theme-select'); // テーマ選択用に追加
+    const themeSelect = document.getElementById('theme-select');
+    const marpOptionsContainer = document.getElementById('marp-options-container');
+    const slideCountInput = document.getElementById('slide-count-input');
+    const includeHashtagsCheckbox = document.getElementById('include-hashtags-checkbox');
 
     // バックエンドAPIのURL
     const API_BASE_URL = '/api';
     const GENERATE_API_URL = `${API_BASE_URL}/generate`;
     const DOWNLOAD_PDF_API_URL = `${API_BASE_URL}/download_pdf`;
     const TEMPLATES_API_URL = `${API_BASE_URL}/templates`;
-    const THEMES_API_URL = `${API_BASE_URL}/themes`; // テーマAPI用に追加
+    const THEMES_API_URL = `${API_BASE_URL}/themes`;
 
     // コピーボタンの初期のテキスト
     const originalCopyButtonText = copyButton.textContent;
+
+    // テンプレート情報を保持する変数
+    let allTemplates = [];
 
     // テンプレートをバックエンドから取得してドロップダウンを生成する関数
     async function populateTemplates() {
@@ -25,13 +31,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) {
                 throw new Error('テンプレートの読み込みに失敗しました。');
             }
-            const templates = await response.json();
-            templates.forEach(template => {
+            allTemplates = await response.json(); // テンプレート情報を保持
+            templateSelect.innerHTML = ''; // 一旦クリア
+            allTemplates.forEach(template => {
                 const option = document.createElement('option');
                 option.value = template.name;
                 option.textContent = template.label;
                 templateSelect.appendChild(option);
             });
+            // 初期表示のためにchangeイベントを発火
+            templateSelect.dispatchEvent(new Event('change'));
         } catch (error) {
             console.error('Error fetching templates:', error);
             alert(error.message);
@@ -48,8 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const themes = await response.json();
             themes.forEach(theme => {
                 const option = document.createElement('option');
-                option.value = theme.id; // valueをidに
-                option.textContent = theme.name; // textをnameに
+                option.value = theme.id;
+                option.textContent = theme.name;
                 themeSelect.appendChild(option);
             });
         } catch (error) {
@@ -57,6 +66,17 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(error.message);
         }
     }
+
+    // テンプレート選択の変更イベント
+    templateSelect.addEventListener('change', () => {
+        const selectedTemplateName = templateSelect.value;
+        const selectedTemplate = allTemplates.find(t => t.name === selectedTemplateName);
+        if (selectedTemplate && selectedTemplate.output_type === 'marp') {
+            marpOptionsContainer.style.display = 'flex';
+        } else {
+            marpOptionsContainer.style.display = 'none';
+        }
+    });
 
     // ページ読み込み時にテンプレートとテーマを取得
     populateTemplates();
@@ -66,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
     generateButton.addEventListener('click', async () => {
         const topic = topicInput.value;
         const templateName = templateSelect.value;
-        const themeId = themeSelect.value; // 選択されたテーマIDを取得
+        const themeId = themeSelect.value;
 
         if (!topic.trim()) {
             alert('お題を入力してください。');
@@ -77,25 +97,31 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // ボタンを無効化し、ローディング表示
         generateButton.disabled = true;
         downloadPdfButton.disabled = true;
-        resultTextarea.value = 'AIが生成中です...'; // .textContentから.valueへ変更
+        resultTextarea.value = 'AIが生成中です...';
         resultTextarea.classList.add('loading');
 
+        // リクエストボディを構築
+        const requestBody = {
+            topic: topic,
+            template_name: templateName,
+            theme_id: parseInt(themeId, 10)
+        };
+
+        // Marpオプションが表示されている場合、値を追加
+        if (marpOptionsContainer.style.display !== 'none') {
+            requestBody.slide_count = parseInt(slideCountInput.value, 10);
+            requestBody.include_hashtags = includeHashtagsCheckbox.checked;
+        }
+
         try {
-            // バックエンドAPIにリクエストを送信
             const response = await fetch(GENERATE_API_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                // topic, template_name, theme_idを送信
-                body: JSON.stringify({
-                    topic: topic,
-                    template_name: templateName,
-                    theme_id: parseInt(themeId, 10) // 数値として送信
-                }),
+                body: JSON.stringify(requestBody),
             });
 
             if (!response.ok) {
@@ -104,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const data = await response.json();
-            resultTextarea.value = data.content; // .textContentから.valueへ変更
+            resultTextarea.value = data.content;
             downloadPdfButton.disabled = false;
 
         } catch (error) {

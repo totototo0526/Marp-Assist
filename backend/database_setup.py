@@ -242,6 +242,36 @@ def insert_weekend_it_slides_template():
             conn.commit()
             print(f"✅ 新しいテンプレート '{template['template_name']}' を追加しました。")
 
+def add_slide_and_hashtag_columns():
+    """
+    templatesテーブルにslide_countとinclude_hashtagsカラムを追加する。
+    """
+    with db_session() as conn:
+        with conn.cursor() as cur:
+            # slide_countカラムの存在チェック
+            cur.execute("""
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name='templates' AND column_name='slide_count';
+            """)
+            if not cur.fetchone():
+                cur.execute("ALTER TABLE templates ADD COLUMN slide_count INTEGER NOT NULL DEFAULT 3;")
+                conn.commit()
+                print("✅ `slide_count`カラムを`templates`テーブルに追加しました。")
+            else:
+                print("ℹ️ `slide_count`カラムは既に存在します。")
+
+            # include_hashtagsカラムの存在チェック
+            cur.execute("""
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name='templates' AND column_name='include_hashtags';
+            """)
+            if not cur.fetchone():
+                cur.execute("ALTER TABLE templates ADD COLUMN include_hashtags BOOLEAN NOT NULL DEFAULT true;")
+                conn.commit()
+                print("✅ `include_hashtags`カラムを`templates`テーブルに追加しました。")
+            else:
+                print("ℹ️ `include_hashtags`カラムは既に存在します。")
+
 def main():
     """データベースのセットアップ処理を正しい順序で実行する"""
     print("データベースのセットアップを開始します...")
@@ -252,6 +282,7 @@ def main():
 
     # 2. テーブル構造を更新する
     add_theme_id_to_templates()
+    add_slide_and_hashtag_columns() # 新しいカラム追加処理を呼び出す
 
     # 3. 初期データを挿入する
     insert_sample_themes()

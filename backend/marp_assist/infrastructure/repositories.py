@@ -47,7 +47,9 @@ class TemplateRepository:
             target_audience=row['target_audience'],
             keywords=row['keywords'],
             banned_words=row['banned_words'],
-            theme_id=row.get('theme_id') # NULLの場合があるので .get() を使用
+            theme_id=row.get('theme_id'), # NULLの場合があるので .get() を使用
+            slide_count=row['slide_count'],
+            include_hashtags=row['include_hashtags']
         )
 
     def get_all(self) -> List[Template]:

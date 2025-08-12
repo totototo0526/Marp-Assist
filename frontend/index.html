@@ -34,6 +34,17 @@
         </div>
     </div>
 
+    <div id="marp-options-container" style="display: none; margin-bottom: 1em; display: flex; gap: 20px; align-items: center;">
+        <div>
+            <label for="slide-count-input">スライド枚数:</label>
+            <input type="number" id="slide-count-input" value="5" min="1" max="20" style="width: 60px;">
+        </div>
+        <div>
+            <input type="checkbox" id="include-hashtags-checkbox" checked>
+            <label for="include-hashtags-checkbox">ハッシュタグを含める</label>
+        </div>
+    </div>
+
     <textarea id="topic-input" placeholder="例：テレワークの生産性を上げる3つのコツ"></textarea>
     <button id="generate-button">Marp原稿を生成する</button>
 
