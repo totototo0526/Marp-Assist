@@ -14,10 +14,10 @@ app.post('/convert', (req, res) => {
     console.log('Received request for /convert');
 
     // --- ここからがテスト用のコード ---
-    const program = 'ls';
-    const args = ['-l', '/tmp'];
+    const program = 'env';
+    const args = [];
 
-    console.log(`Executing test command: ${program} ${args.join(' ')}`);
+    console.log(`Executing test command: ${program}`);
     const testProcess = spawn(program, args);
 
     let output = '';
