@@ -1,8 +1,6 @@
 const express = require('express');
-const { spawn } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+const { Marp } = require('@marp-team/marp-core');
+const puppeteer = require('puppeteer');
 
 const app = express();
 const port = 3000;
@@ -10,72 +8,69 @@ const host = '0.0.0.0';
 
 app.use(express.json({ limit: '10mb' }));
 
-app.post('/convert', (req, res) => {
+app.post('/convert', async (req, res) => {
     console.log('Received request for /convert');
-    const markdown = req.body.markdown;
+    const { markdown } = req.body;
     if (!markdown) {
         return res.status(400).send('Markdown content is required.');
     }
 
-    const tempMarkdownPath = path.join(os.tmpdir(), `temp-marp-${Date.now()}.md`);
-    console.log(`Creating temporary file at: ${tempMarkdownPath}`);
+    let browser;
+    try {
+        console.log('Initializing Marp Core...');
+        const marp = new Marp({
+            html: true, // Enable HTML for security-related features
+        });
 
-    fs.writeFile(tempMarkdownPath, markdown, (writeErr) => {
-        if (writeErr) {
-            console.error(`File write error: ${writeErr}`);
-            return res.status(500).send('Failed to create temporary markdown file.');
-        }
-        console.log('Temporary file created successfully.');
+        console.log('Rendering Markdown...');
+        const { html, css } = marp.render(markdown);
+        console.log('Markdown rendered to HTML.');
 
-        const marpCliScriptPath = path.join(__dirname, 'node_modules', '@marp-team', 'marp-cli', 'marp-cli.js');
+        console.log('Launching Puppeteer...');
+        browser = await puppeteer.launch({
+            executablePath: '/usr/bin/google-chrome',
+            headless: 'new',
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-gpu',
+                '--no-zygote', // Often helps in restricted environments
+                '--single-process' // Another flag that can help
+            ]
+        });
 
-        const program = 'node';
-        const args = [
-            marpCliScriptPath,
-            tempMarkdownPath,
-            '--pdf',
-            '--allow-local-files',
-            '--engine-options', '{"executablePath": "/usr/bin/google-chrome", "headless": "new", "args": ["--no-sandbox", "--disable-setuid-sandbox", "--user-data-dir=/tmp/marp-chrome-profile", "--disable-dev-shm-usage", "--disable-gpu"]}',
-            '-o',
-            '-'
-        ];
+        const page = await browser.newPage();
+        console.log('Setting page content...');
+        // Set content and wait for it to be fully loaded
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+        await page.addStyleTag({ content: css });
 
-        console.log(`Executing command: ${program} ${args.join(' ')}`);
+        console.log('Generating PDF...');
+        const pdfBuffer = await page.pdf({
+            printBackground: true,
+            format: 'A4',
+            margin: { top: '1cm', right: '1cm', bottom: '1cm', left: '1cm' }
+        });
+        console.log('PDF generated successfully.');
 
-        const marpProcess = spawn(program, args);
-
-        // --- ここからが修正部分：より堅牢なストリーム処理 ---
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'attachment; filename=presentation.pdf');
+        res.send(pdfBuffer);
+        console.log('PDF sent successfully.');
 
-        // marp-cliの標準出力を、直接レスポンスのストリームに流し込む
-        marpProcess.stdout.pipe(res);
-
-        let errorOutput = '';
-        marpProcess.stderr.on('data', (data) => {
-            const stderrStr = data.toString();
-            console.error(`Marp CLI stderr: ${stderrStr}`);
-            errorOutput += stderrStr;
-        });
-
-        marpProcess.on('close', (code) => {
-            console.log(`Marp CLI process exited with code ${code}`);
-            fs.unlink(tempMarkdownPath, () => {}); // 一時ファイルを削除
-
-            if (code !== 0) {
-                console.error('Marp CLI process failed.');
-                // ストリームはすでに閉じられているので、ここではログに残すだけ
-            }
-        });
-
-        marpProcess.on('error', (err) => {
-            console.error('Failed to start Marp CLI process.', err);
-            if (!res.headersSent) {
-                res.status(500).send('Failed to start PDF generation process.');
-            }
-        });
-        // --- ここまでが修正部分 ---
-    });
+    } catch (e) {
+        console.error('Error during programmatic PDF conversion:', e);
+        if (!res.headersSent) {
+            res.status(500).send(`An error occurred: ${e.message}`);
+        }
+    } finally {
+        if (browser) {
+            console.log('Closing Puppeteer browser...');
+            await browser.close();
+            console.log('Puppeteer browser closed.');
+        }
+    }
 });
 
 app.listen(port, host, () => {
