@@ -1,10 +1,15 @@
-# backend/marp_assist/domain/models.py (修正版)
-# データベースのテーブル定義と完全に一致するように、データモデルを修正します。
-# __post_init__を追加し、DBの各カラムからconditions属性を自動生成します。
+# backend/marp_assist/domain/models.py
 
 from dataclasses import dataclass, field
 from typing import List, Optional
 import uuid
+
+@dataclass
+class Theme:
+    """CSSテーマを表すドメインモデル"""
+    theme_id: int
+    theme_name: str
+    marp_config: str
 
 @dataclass
 class Template:
@@ -18,6 +23,7 @@ class Template:
     target_audience: Optional[str]
     keywords: Optional[List[str]]
     banned_words: Optional[List[str]]
+    theme_id: Optional[int]  # テーマIDを追加
     conditions: str = field(init=False)
 
     def __post_init__(self):

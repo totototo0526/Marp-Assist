@@ -1,14 +1,42 @@
-# backend/marp_assist/infrastructure/repositories.py (修正版)
-# データベースのテーブル定義とドメインモデルに完全に一致するように修正します。
+# backend/marp_assist/infrastructure/repositories.py
 
 from .database import db_session
-from ..domain.models import Template
+from ..domain.models import Template, Theme
 from typing import List, Optional
+
+class ThemeRepository:
+    def _map_row_to_theme(self, row) -> Theme:
+        """DBの行データをThemeオブジェクトにマッピングする"""
+        return Theme(
+            theme_id=row['theme_id'],
+            theme_name=row['theme_name'],
+            marp_config=row['marp_config']
+        )
+
+    def get_all(self) -> List[Theme]:
+        """DBから全てのテーマを取得する"""
+        themes = []
+        with db_session() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT theme_id, theme_name, marp_config FROM themes ORDER BY created_at ASC")
+                rows = cur.fetchall()
+                for row in rows:
+                    themes.append(self._map_row_to_theme(row))
+        return themes
+
+    def find_by_id(self, theme_id: int) -> Optional[Theme]:
+        """指定されたIDのテーマを1件取得する"""
+        with db_session() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT theme_id, theme_name, marp_config FROM themes WHERE theme_id = %s", (theme_id,))
+                row = cur.fetchone()
+                if row:
+                    return self._map_row_to_theme(row)
+        return None
 
 class TemplateRepository:
     def _map_row_to_template(self, row) -> Template:
         """DBの行データ（辞書）をTemplateオブジェクトにマッピングするヘルパー関数"""
-        # DictCursorから受け取ったrowは辞書ライクなオブジェクト
         return Template(
             template_id=row['template_id'],
             template_name=row['template_name'],
@@ -18,7 +46,8 @@ class TemplateRepository:
             tone_and_manner=row['tone_and_manner'],
             target_audience=row['target_audience'],
             keywords=row['keywords'],
-            banned_words=row['banned_words']
+            banned_words=row['banned_words'],
+            theme_id=row.get('theme_id') # NULLの場合があるので .get() を使用
         )
 
     def get_all(self) -> List[Template]:
